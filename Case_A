@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulação - PNG Animation</title>
+  <style>
+    body {
+      margin: 0;
+      background: #101923;
+      color: white;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1100px, 95vw);
+    }
+
+    .frame-box {
+      width: 100%;
+      min-height: 650px;
+      background: #2f2f2f;
+      border: 1px solid #4fc3f7;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button, select, input[type="range"] {
+      font: inherit;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid #4fc3f7;
+      background: #15384d;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #204d67;
+    }
+
+    select {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #15384d;
+      color: white;
+      border: 1px solid #4fc3f7;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #4fc3f7;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #d7ecff;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="frame-box">
+      <img id="frame" alt="Frame da simulação" />
+    </div>
+
+    <div class="controls">
+      <button id="playPauseBtn">▶ Reproduzir</button>
+      <button id="prevBtn">◀</button>
+      <button id="nextBtn">▶</button>
+      <input id="slider" type="range" min="0" max="0" value="0" />
+      <select id="speed">
+        <option value="200">5 fps</option>
+        <option value="100" selected>10 fps</option>
+        <option value="50">20 fps</option>
+      </select>
+    </div>
+
+    <div class="status" id="statusText">Carregando sequência…</div>
+  </div>
+
+  <script>
+    const frameEl = document.getElementById("frame");
+    const slider = document.getElementById("slider");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const speed = document.getElementById("speed");
+    const statusText = document.getElementById("statusText");
+
+    const images = [];
+    let currentIndex = 0;
+    let timer = null;
+
+    function pathFor(number) {
+      const padded = String(number).padStart(4, "0");
+      return `./simulacao.${padded}.png`;
+    }
+
+    function findAllFrames() {
+      let idx = 0;
+
+      function testNext() {
+        const url = pathFor(idx);
+        const img = new Image();
+        
+        img.onload = () => {
+          images.push(url);
+          idx++;
+          testNext();
+        };
+        
+        img.onerror = () => {
+          if (images.length === 0) {
+            statusText.textContent = "Nenhum frame encontrado. Verifique se os PNGs estão na raiz com nomes do tipo simulacao.0000.png";
+          } else {
+            startViewer();
+          }
+        };
+        
+        img.src = url;
+      }
+
+      testNext();
+    }
+
+    function renderFrame(index) {
+      if (!images.length) return;
+
+      currentIndex = (index + images.length) % images.length;
+      frameEl.src = images[currentIndex];
+      slider.value = currentIndex;
+      statusText.textContent = `Quadro ${currentIndex + 1} / ${images.length}`;
+    }
+
+    function stopPlayback() {
+      clearInterval(timer);
+      timer = null;
+      playPauseBtn.textContent = "▶ Reproduzir";
+    }
+
+    function startPlayback() {
+      if (images.length < 2) return;
+
+      stopPlayback();
+      playPauseBtn.textContent = "❚❚ Pausar";
+      timer = setInterval(() => {
+        currentIndex = (currentIndex + 1) % images.length;
+        renderFrame(currentIndex);
+      }, Number(speed.value));
+    }
+
+    function startViewer() {
+      if (!images.length) return;
+
+      slider.max = String(images.length - 1);
+      renderFrame(0);
+    }
+
+    playPauseBtn.addEventListener("click", () => {
+      if (timer) {
+        stopPlayback();
+      } else {
+        startPlayback();
+      }
+    });
+
+    prevBtn.addEventListener("click", () => {
+      stopPlayback();
+      renderFrame(currentIndex - 1);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      stopPlayback();
+      renderFrame(currentIndex + 1);
+    });
+
+    slider.addEventListener("input", () => {
+      stopPlayback();
+      renderFrame(Number(slider.value));
+    });
+
+    speed.addEventListener("change", () => {
+      if (timer) {
+        startPlayback();
+      }
+    });
+
+    // Inicia a busca pelos frames
+    findAllFrames();
+  </script>
+</body>
+</html>
