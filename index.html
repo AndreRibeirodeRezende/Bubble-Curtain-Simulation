@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulação - Corte de Bolhas</title>
+  <title>Simulação - Cortina de Bolhas</title>
   <style>
     body {
       margin: 0;
@@ -99,6 +99,7 @@
         <option value="200">5 fps</option>
         <option value="100" selected>10 fps</option>
         <option value="50">20 fps</option>
+        <option value="33">30 fps</option>
       </select>
     </div>
 
@@ -118,10 +119,10 @@
     let currentIndex = 0;
     let timer = null;
 
+    // AQUI FOI ALTERADO O NOME DO ARQUIVO
     function pathFor(number) {
       const padded = String(number).padStart(4, "0");
-      // AQUI ESTÁ A ALTERAÇÃO DO NOME DO ARQUIVO
-      return `./Animacao_Caso_A.${padded}.png`;
+      return `./Animacao_Caso_A_${padded}.png`;
     }
 
     function findAllFrames() {
@@ -134,13 +135,16 @@
         img.onload = () => {
           images.push(url);
           idx++;
+          // Atualiza o status enquanto carrega
+          statusText.textContent = `Carregando frames... (Encontrados: ${images.length})`;
           testNext();
         };
         
         img.onerror = () => {
           if (images.length === 0) {
-            statusText.textContent = "Nenhum frame encontrado. Verifique se os PNGs estão na raiz com nomes do tipo Animacao_Caso_A.0000.png";
+            statusText.textContent = "Nenhum frame encontrado. Verifique se os arquivos 'Animacao_Caso_A_0000.png' estão na raiz do repositório.";
           } else {
+            // Terminou de carregar todos os frames disponíveis
             startViewer();
           }
         };
@@ -182,6 +186,8 @@
 
       slider.max = String(images.length - 1);
       renderFrame(0);
+      // Dá play automaticamente após carregar
+      startPlayback(); 
     }
 
     playPauseBtn.addEventListener("click", () => {
